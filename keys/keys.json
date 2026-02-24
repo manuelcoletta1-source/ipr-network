@@ -1,0 +1,20 @@
+{
+  "proto": "HBCE-KEYS-v1",
+  "network": "EU",
+  "issuer": "HERMETICUM B.C.E. S.r.l.",
+  "keys": [
+    {
+      "key_id": "NODE-0001_SIGNING_KEY_01",
+      "alg": "Ed25519",
+      "status": "ACTIVE",
+      "purpose": [
+        "SIGN_EVENTS"
+      ],
+      "pubkey_base64": "UNSET"
+    }
+  ],
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
