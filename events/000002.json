@@ -1,0 +1,15 @@
+{
+  "proto": "HBCE-EVENT-v1",
+  "network": "EU",
+  "mode": "APPEND_ONLY",
+  "event_id": 2,
+  "ts_iso": "2026-02-24T00:00:00+01:00",
+  "kind": "NODE_SEALED",
+  "note": "NODE-0002 head/proofs sealed under canonical verification.",
+  "node_id": "NODE-0002",
+  "prev_event_sha256": "3b919d199b393e440dcb5e3b787a0a86b30d4782797cc642d3ea18aa25b7d4e6",
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
