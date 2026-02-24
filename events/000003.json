@@ -1,0 +1,16 @@
+{
+  "proto": "HBCE-EVENT-v1",
+  "network": "EU",
+  "mode": "APPEND_ONLY",
+  "event_id": 3,
+  "ts_iso": "2026-02-24T00:00:00+01:00",
+  "kind": "REGISTRY_UPDATED",
+  "note": "Registry canonical integrity anchored into append-only ledger.",
+  "registry_url": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json",
+  "registry_sha256_canonical": "4f07cb32406ba6b371ecc11e773b3e70decdd8729b9b0df091b8e768e60e12de",
+  "prev_event_sha256": "d8b86dc5972356c2855fbff9ab525f861ac2fac0f84be288cddd1665c4922fa7",
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
