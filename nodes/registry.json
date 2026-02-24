@@ -1,55 +1,53 @@
 {
   "proto": "HBCE-REGISTRY-v3",
-  "kind": "IPR_NETWORK_NODE_REGISTRY",
+  "kind": "IPR_PUBLIC_LEDGER",
   "network": "EU",
-  "mode": "APPEND_ONLY_PUBLIC_REGISTRY",
+  "mode": "APPEND_ONLY_PUBLIC_LEDGER",
   "issuer": "HERMETICUM B.C.E. S.r.l.",
   "jurisdiction": "EU",
-  "policy": ["HASH_ONLY", "APPEND_ONLY", "FAIL_CLOSED", "UE_FIRST", "AUDIT_FIRST", "GDPR_MIN"],
+  "policy": [
+    "HASH_ONLY",
+    "APPEND_ONLY",
+    "FAIL_CLOSED",
+    "UE_FIRST",
+    "AUDIT_FIRST",
+    "GDPR_MIN"
+  ],
   "rules": {
     "public_data": "HASH_ONLY",
     "write_mode": "MANUAL_APPEND_ONLY",
     "verification": "DETERMINISTIC_SHA256_MATCH",
     "failure_mode": "FAIL_CLOSED"
   },
+
   "nodes": [
     {
       "node_id": "NODE-0001",
-      "name": "IPR Network Status Surface",
-      "role": "PUBLIC_VISIBILITY_NODE",
+      "role": "ROOT_REGISTRY",
+      "network": "EU",
       "state": "ONLINE",
-      "visibility": "PUBLIC",
-      "sync": "STANDALONE",
       "endpoints": {
-        "home": "https://manuelcoletta1-source.github.io/ipr-network/",
-        "status": "https://manuelcoletta1-source.github.io/ipr-network/status/",
         "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json",
-        "sha256_tool": "https://manuelcoletta1-source.github.io/ipr-network/tools/sha256/"
+        "verify": "https://manuelcoletta1-source.github.io/ipr-network/verify/",
+        "status": "https://manuelcoletta1-source.github.io/ipr-network/status/"
       },
       "proofs": {
-        "integrity_sha256": "UNSET",
-        "method": "DETERMINISTIC_SHA256_MATCH"
+        "integrity_sha256": "60e7b77dc311bbd3a4fe290effc745c89b811a9658395288153044a0e8ec0ce8",
+        "method": "DETERMINISTIC_SHA256_CANONICAL"
       }
     },
     {
       "node_id": "NODE-0002",
-      "name": "Node Pack Deployment Surface",
       "role": "DEPLOYMENT_SURFACE",
+      "network": "EU",
       "state": "ONLINE",
-      "visibility": "PUBLIC",
-      "sync": "STANDALONE",
       "endpoints": {
         "home": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/",
         "head": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/head.json",
-        "proofs": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json",
-        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json",
-        "sha256_tool": "https://manuelcoletta1-source.github.io/ipr-network/tools/sha256/"
-      },
-      "proofs": {
-        "head_self_hash_sha256": "UNSET",
-        "registry_integrity_sha256": "UNSET",
-        "method": "DETERMINISTIC_SHA256_MATCH"
+        "proofs": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json"
       }
     }
-  ]
+  ],
+
+  "entries": []
 }
