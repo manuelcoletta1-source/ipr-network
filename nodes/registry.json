@@ -23,10 +23,11 @@
       "endpoints": {
         "home": "https://manuelcoletta1-source.github.io/ipr-network/",
         "status": "https://manuelcoletta1-source.github.io/ipr-network/status/",
-        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json"
+        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json",
+        "sha256_tool": "https://manuelcoletta1-source.github.io/ipr-network/tools/sha256/"
       },
       "proofs": {
-        "integrity": "UNSET",
+        "integrity_sha256": "UNSET",
         "method": "DETERMINISTIC_SHA256_MATCH"
       }
     },
@@ -41,10 +42,12 @@
         "home": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/",
         "head": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/head.json",
         "proofs": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json",
-        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json"
+        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json",
+        "sha256_tool": "https://manuelcoletta1-source.github.io/ipr-network/tools/sha256/"
       },
       "proofs": {
-        "integrity": "UNSET",
+        "head_self_hash_sha256": "UNSET",
+        "registry_integrity_sha256": "UNSET",
         "method": "DETERMINISTIC_SHA256_MATCH"
       }
     }
