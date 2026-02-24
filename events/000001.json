@@ -1,0 +1,14 @@
+{
+  "proto": "HBCE-EVENT-v1",
+  "network": "EU",
+  "mode": "APPEND_ONLY",
+  "event_id": 1,
+  "ts_iso": "2026-02-24T00:00:00+01:00",
+  "kind": "LEDGER_GENESIS",
+  "note": "First public append-only event for IPR Network ledger.",
+  "prev_event_sha256": "GENESIS",
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
