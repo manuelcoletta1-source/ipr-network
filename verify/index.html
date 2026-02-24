@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Verify — IPR Network (Fail-Closed)</title>
-  <meta name="description" content="Fail-closed deterministic verification for IPR Network artifacts (SHA-256)."/>
+  <meta name="description" content="Fail-closed deterministic verification for IPR Network artifacts (SHA-256 canonical)."/>
   <meta name="robots" content="index,follow"/>
   <meta name="theme-color" content="#0b0f14"/>
 
@@ -69,7 +69,7 @@
       font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
       font-size:13px;
     }
-    .small{ font-size:12px; color:var(--muted); margin-top:8px; }
+    .small{ font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6; }
   </style>
 </head>
 
@@ -77,7 +77,7 @@
 <main class="wrap">
   <h1>Verify (Fail-Closed)</h1>
   <p>
-    Deterministic SHA-256 verification for public IPR Network artifacts.
+    Deterministic SHA-256 verification for public IPR Network artifacts using <b>CANONICAL hashing</b>.
     Any mismatch or UNSET = <b>INVALID</b>.
   </p>
 
@@ -97,7 +97,11 @@
       <input id="registryUrl" value="https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json" />
       <button id="run">Run Verification</button>
     </div>
-    <div class="small">Verification uses <code>cache: no-store</code>. Stable URLs are mandatory for auditability.</div>
+    <div class="small">
+      Canonical rules:
+      <br/>- Registry hash computed ignoring <code>nodes[].proofs.integrity_sha256</code>.
+      <br/>- For node head/proofs and events files, hash computed ignoring <code>integrity.self_hash_sha256</code>.
+    </div>
   </div>
 
   <div class="grid">
@@ -106,7 +110,7 @@
       <div id="globalStatus" class="v bad">MISSING (run verification)</div>
     </div>
     <div class="card">
-      <div class="k">Registry Hash (computed)</div>
+      <div class="k">Registry Hash (computed canonical)</div>
       <div id="regHash" class="v">—</div>
     </div>
     <div class="card">
@@ -151,105 +155,118 @@
     else { el.textContent = "INVALID (FAIL-CLOSED)"; el.className = "v bad"; }
   }
 
+  function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
+
+  function canonicalize(obj){
+    const o = deepClone(obj);
+
+    // ignore integrity.self_hash_sha256
+    try{
+      if(o && o.integrity && typeof o.integrity === "object" && Object.prototype.hasOwnProperty.call(o.integrity, "self_hash_sha256")){
+        o.integrity.self_hash_sha256 = "IGNORED_FOR_CANONICAL_HASH";
+      }
+    }catch{}
+
+    // registry: ignore nodes[].proofs.integrity_sha256
+    try{
+      const proto = (o && typeof o.proto === "string") ? o.proto : "";
+      if(proto.startsWith("HBCE-REGISTRY")){
+        const nodes = Array.isArray(o.nodes) ? o.nodes : [];
+        for(const n of nodes){
+          if(n && n.proofs && typeof n.proofs === "object" && Object.prototype.hasOwnProperty.call(n.proofs, "integrity_sha256")){
+            n.proofs.integrity_sha256 = "IGNORED_FOR_CANONICAL_HASH";
+          }
+        }
+      }
+    }catch{}
+
+    return JSON.stringify(o);
+  }
+
+  async function sha256CanonicalJson(txt){
+    const obj = JSON.parse(txt);
+    const canTxt = canonicalize(obj);
+    return sha256Text(canTxt);
+  }
+
   function getNode(reg, nodeId){
     const nodes = Array.isArray(reg.nodes) ? reg.nodes : [];
     return nodes.find(n => n && n.node_id === nodeId) || null;
   }
 
   function pickDeclaredRegistryIntegrity(reg){
-    // Declared registry hash lives in NODE-0001.proofs.integrity_sha256
     try{
       const n1 = getNode(reg, "NODE-0001");
       const v = n1 && n1.proofs && typeof n1.proofs.integrity_sha256 === "string"
         ? n1.proofs.integrity_sha256.trim()
         : null;
-      return (v && v.length) ? v : null;
+      return (v && v.length && v !== "UNSET") ? v : null;
     }catch{ return null; }
   }
 
-  async function verifySelfHashedJson(url, label){
+  async function verifySelfHashedJsonCanonical(url){
     const txt = await fetchText(url);
-    const computed = await sha256Text(txt);
-
-    let obj = null;
-    try{ obj = JSON.parse(txt); } catch { obj = null; }
-
+    const computed = await sha256CanonicalJson(txt);
+    const obj = JSON.parse(txt);
     const declared = obj && obj.integrity && typeof obj.integrity.self_hash_sha256 === "string"
       ? obj.integrity.self_hash_sha256.trim()
       : null;
 
     const ok = !!declared && declared !== "UNSET" && declared === computed.hash;
-    return { ok, label, url, declared, computed: computed.hash };
+    return { ok, url, declared, computed: computed.hash };
   }
 
-  async function verifyEventsLedger(){
+  async function verifyEventsLedgerCanonical(){
     const indexUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/index.json";
 
-    // 1) verify index self-hash
-    const idxRes = await verifySelfHashedJson(indexUrl, "EVENTS_INDEX");
+    const idxRes = await verifySelfHashedJsonCanonical(indexUrl);
     if(!idxRes.ok){
-      return {
-        ok: false,
-        lines: [
-          "EVENTS_INDEX_URL :: " + indexUrl,
-          "EVENTS_INDEX_DECLARED :: " + (idxRes.declared || "MISSING/UNSET"),
-          "EVENTS_INDEX_COMPUTED :: " + (idxRes.computed || "MISSING"),
-          "EVENTS_INDEX_RESULT :: FAIL"
-        ]
-      };
+      return { ok:false, lines:[
+        "EVENTS_INDEX_URL :: " + indexUrl,
+        "EVENTS_INDEX_DECLARED :: " + (idxRes.declared || "MISSING/UNSET"),
+        "EVENTS_INDEX_COMPUTED_CANONICAL :: " + (idxRes.computed || "MISSING"),
+        "EVENTS_INDEX_RESULT :: FAIL"
+      ]};
     }
 
-    // 2) parse index entries
     const idxTxt = await fetchText(indexUrl);
     const idx = JSON.parse(idxTxt);
     const entries = Array.isArray(idx.entries) ? idx.entries : [];
-    if(entries.length < 1){
-      return { ok:false, lines:["EVENTS_ENTRIES :: EMPTY (fail-closed)"] };
-    }
+    if(entries.length < 1) return { ok:false, lines:["EVENTS_ENTRIES :: EMPTY (fail-closed)"] };
 
-    // 3) verify first event declared sha + self-hash + chain prev
     const e0 = entries[0];
     const path = e0 && typeof e0.path === "string" ? e0.path : null;
     const declaredSha = e0 && typeof e0.sha256 === "string" ? e0.sha256.trim() : null;
     const prevDeclared = e0 && typeof e0.prev_sha256 === "string" ? e0.prev_sha256.trim() : null;
-
     if(!path) return { ok:false, lines:["EVENT_1_PATH :: MISSING (fail-closed)"] };
 
     const eventUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/" + path;
-    const eventTxt = await fetchText(eventUrl);
-    const eventComputed = await sha256Text(eventTxt);
-
-    let eventObj = null;
-    try{ eventObj = JSON.parse(eventTxt); } catch { eventObj = null; }
-
-    const eventSelfDeclared = eventObj && eventObj.integrity && typeof eventObj.integrity.self_hash_sha256 === "string"
-      ? eventObj.integrity.self_hash_sha256.trim()
+    const evTxt = await fetchText(eventUrl);
+    const evCan = await sha256CanonicalJson(evTxt);
+    const evObj = JSON.parse(evTxt);
+    const evDeclared = evObj && evObj.integrity && typeof evObj.integrity.self_hash_sha256 === "string"
+      ? evObj.integrity.self_hash_sha256.trim()
+      : null;
+    const evPrevField = evObj && typeof evObj.prev_event_sha256 === "string"
+      ? evObj.prev_event_sha256.trim()
       : null;
 
-    const eventPrevField = eventObj && typeof eventObj.prev_event_sha256 === "string"
-      ? eventObj.prev_event_sha256.trim()
-      : null;
-
-    const okDeclaredSha = !!declaredSha && declaredSha !== "UNSET" && declaredSha === eventComputed.hash;
-    const okSelf = !!eventSelfDeclared && eventSelfDeclared !== "UNSET" && eventSelfDeclared === eventComputed.hash;
-
-    // genesis rules: index prev must be GENESIS and event prev field must be GENESIS
-    const okPrev = (prevDeclared === "GENESIS") && (eventPrevField === "GENESIS");
+    const okDeclaredSha = !!declaredSha && declaredSha !== "UNSET" && declaredSha === evCan.hash;
+    const okSelf = !!evDeclared && evDeclared !== "UNSET" && evDeclared === evCan.hash;
+    const okPrev = (prevDeclared === "GENESIS") && (evPrevField === "GENESIS");
 
     const okAll = idxRes.ok && okDeclaredSha && okSelf && okPrev;
 
-    const lines = [
+    return { ok: okAll, lines:[
       "EVENTS_INDEX_RESULT :: OK",
       "EVENT_1_URL :: " + eventUrl,
       "EVENT_1_INDEX_DECLARED_SHA :: " + (declaredSha || "MISSING/UNSET"),
-      "EVENT_1_COMPUTED_SHA :: " + eventComputed.hash,
-      "EVENT_1_SELF_DECLARED_SHA :: " + (eventSelfDeclared || "MISSING/UNSET"),
+      "EVENT_1_COMPUTED_CANONICAL_SHA :: " + evCan.hash,
+      "EVENT_1_SELF_DECLARED_SHA :: " + (evDeclared || "MISSING/UNSET"),
       "EVENT_1_PREV_INDEX :: " + (prevDeclared || "MISSING"),
-      "EVENT_1_PREV_FIELD :: " + (eventPrevField || "MISSING"),
+      "EVENT_1_PREV_FIELD :: " + (evPrevField || "MISSING"),
       "EVENT_1_RESULT :: " + (okAll ? "OK" : "FAIL")
-    ];
-
-    return { ok: okAll, lines };
+    ]};
   }
 
   async function run(){
@@ -257,122 +274,68 @@
     let okAll = true;
 
     const url = (document.getElementById("registryUrl").value || "").trim();
-    if(!url){
-      setStatus(false);
-      document.getElementById("report").textContent = "Missing registry URL.";
-      return;
-    }
-
     report.push("VERIFY :: START");
     report.push("REGISTRY_URL :: " + url);
     report.push("");
 
-    // Fetch registry
-    let regTxt = "";
-    try{
-      regTxt = await fetchText(url);
-    }catch(e){
-      okAll = false;
-      report.push("REGISTRY_FETCH :: ERROR");
-      report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
-      setStatus(false);
-      document.getElementById("report").textContent = report.join("\n");
-      return;
-    }
+    const regTxt = await fetchText(url);
+    const reg = JSON.parse(regTxt);
+    report.push("REGISTRY_PARSE :: OK");
 
-    const regHash = await sha256Text(regTxt);
-    document.getElementById("regHash").textContent = regHash.hash;
+    const regCan = await sha256CanonicalJson(regTxt);
+    document.getElementById("regHash").textContent = regCan.hash;
 
-    // Parse
-    let reg = null;
-    try{
-      reg = JSON.parse(regTxt);
-      report.push("REGISTRY_PARSE :: OK");
-    }catch{
-      okAll = false;
-      report.push("REGISTRY_PARSE :: FAIL (invalid JSON)");
-      setStatus(false);
-      document.getElementById("report").textContent = report.join("\n");
-      return;
-    }
-
-    // Declared integrity
     const declared = pickDeclaredRegistryIntegrity(reg);
-    document.getElementById("regDeclared").textContent = declared ? declared : "MISSING";
+    document.getElementById("regDeclared").textContent = declared ? declared : "MISSING/UNSET";
 
-    if(!declared || declared === "UNSET"){
+    if(!declared){ okAll = false; report.push("REGISTRY_DECLARED :: MISSING/UNSET (fail-closed)"); }
+    else if(declared !== regCan.hash){
       okAll = false;
-      report.push("REGISTRY_DECLARED :: MISSING/UNSET (fail-closed)");
-    }else if(declared !== regHash.hash){
-      okAll = false;
-      report.push("REGISTRY_INTEGRITY :: MISMATCH");
+      report.push("REGISTRY_INTEGRITY :: MISMATCH (CANONICAL)");
       report.push("DECLARED :: " + declared);
-      report.push("COMPUTED :: " + regHash.hash);
+      report.push("COMPUTED_CANONICAL :: " + regCan.hash);
     }else{
-      report.push("REGISTRY_INTEGRITY :: OK");
-      report.push("SHA256 :: " + regHash.hash);
+      report.push("REGISTRY_INTEGRITY :: OK (CANONICAL)");
+      report.push("SHA256_CANONICAL :: " + regCan.hash);
     }
 
     report.push("");
 
-    // NODE-0002 required
     const n2 = getNode(reg, "NODE-0002");
-    if(!n2){
-      okAll = false;
-      report.push("NODE-0002 :: MISSING (fail-closed)");
-    }else{
+    if(!n2){ okAll = false; report.push("NODE-0002 :: MISSING (fail-closed)"); }
+    else{
       report.push("NODE-0002 :: FOUND");
-      const endpoints = n2.endpoints || {};
-      const headUrl = typeof endpoints.head === "string" ? endpoints.head : null;
-      const proofsUrl = typeof endpoints.proofs === "string" ? endpoints.proofs : "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json";
+      const headUrl = n2.endpoints && typeof n2.endpoints.head === "string" ? n2.endpoints.head : null;
+      const proofsUrl = n2.endpoints && typeof n2.endpoints.proofs === "string" ? n2.endpoints.proofs : null;
 
-      // Verify head self-hash
-      if(!headUrl){
-        okAll = false;
-        report.push("NODE-0002_HEAD_URL :: MISSING (fail-closed)");
-      }else{
-        try{
-          const headRes = await verifySelfHashedJson(headUrl, "NODE-0002_HEAD");
-          report.push("NODE-0002_HEAD_URL :: " + headUrl);
-          report.push("NODE-0002_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET"));
-          report.push("NODE-0002_HEAD_COMPUTED :: " + (headRes.computed || "MISSING"));
-          report.push("NODE-0002_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL"));
-          if(!headRes.ok) okAll = false;
-        }catch(e){
-          okAll = false;
-          report.push("NODE-0002_HEAD :: ERROR");
-          report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
-        }
+      if(!headUrl){ okAll = false; report.push("NODE-0002_HEAD_URL :: MISSING (fail-closed)"); }
+      else{
+        const headRes = await verifySelfHashedJsonCanonical(headUrl);
+        report.push("NODE-0002_HEAD_URL :: " + headUrl);
+        report.push("NODE-0002_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET"));
+        report.push("NODE-0002_HEAD_COMPUTED_CANONICAL :: " + (headRes.computed || "MISSING"));
+        report.push("NODE-0002_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL"));
+        if(!headRes.ok) okAll = false;
       }
 
       report.push("");
 
-      // Verify proofs self-hash (strict)
-      try{
-        const pRes = await verifySelfHashedJson(proofsUrl, "NODE-0002_PROOFS");
+      if(!proofsUrl){ okAll = false; report.push("NODE-0002_PROOFS_URL :: MISSING (fail-closed)"); }
+      else{
+        const pRes = await verifySelfHashedJsonCanonical(proofsUrl);
         report.push("NODE-0002_PROOFS_URL :: " + proofsUrl);
         report.push("NODE-0002_PROOFS_DECLARED :: " + (pRes.declared || "MISSING/UNSET"));
-        report.push("NODE-0002_PROOFS_COMPUTED :: " + (pRes.computed || "MISSING"));
+        report.push("NODE-0002_PROOFS_COMPUTED_CANONICAL :: " + (pRes.computed || "MISSING"));
         report.push("NODE-0002_PROOFS_RESULT :: " + (pRes.ok ? "OK" : "FAIL"));
         if(!pRes.ok) okAll = false;
-      }catch(e){
-        okAll = false;
-        report.push("NODE-0002_PROOFS :: ERROR");
-        report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
       }
     }
 
     report.push("");
-    report.push("LEDGER :: EVENTS");
-    try{
-      const ev = await verifyEventsLedger();
-      report.push(...ev.lines);
-      if(!ev.ok) okAll = false;
-    }catch(e){
-      okAll = false;
-      report.push("EVENTS_VERIFY :: ERROR");
-      report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
-    }
+    report.push("LEDGER :: EVENTS (CANONICAL)");
+    const ev = await verifyEventsLedgerCanonical();
+    report.push(...ev.lines);
+    if(!ev.ok) okAll = false;
 
     report.push("");
     report.push("VERIFY :: " + (okAll ? "VALID" : "INVALID (FAIL-CLOSED)"));
@@ -381,7 +344,13 @@
     document.getElementById("report").textContent = report.join("\n");
   }
 
-  document.getElementById("run").addEventListener("click", run);
+  document.getElementById("run").addEventListener("click", () => {
+    run().catch(e => {
+      setStatus(false);
+      document.getElementById("report").textContent =
+        "ERROR :: " + (e && e.message ? e.message : String(e));
+    });
+  });
 })();
 </script>
 </body>
