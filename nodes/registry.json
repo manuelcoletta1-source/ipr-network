@@ -31,7 +31,7 @@
         "status": "https://manuelcoletta1-source.github.io/ipr-network/status/"
       },
       "proofs": {
-        "integrity_sha256": "4f07cb32406ba6b371ecc11e773b3e70decdd8729b9b0df091b8e768e60e12de",
+        "integrity_sha256": "UNSET",
         "method": "DETERMINISTIC_SHA256_CANONICAL"
       }
     },
@@ -44,6 +44,17 @@
         "home": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/",
         "head": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/head.json",
         "proofs": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json"
+      }
+    },
+    {
+      "node_id": "NODE-0003",
+      "role": "DEPLOYMENT_SURFACE",
+      "network": "EU",
+      "state": "ONLINE",
+      "endpoints": {
+        "home": "https://manuelcoletta1-source.github.io/ipr-network-node-0003/",
+        "head": "https://manuelcoletta1-source.github.io/ipr-network-node-0003/node-pack/head.json",
+        "proofs": "https://manuelcoletta1-source.github.io/ipr-network-node-0003/node-pack/proofs.json"
       }
     }
   ],
