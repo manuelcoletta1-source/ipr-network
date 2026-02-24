@@ -1,154 +1,326 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IPR Network — European Operational Identity Infrastructure</title>
-  <meta name="description" content="IPR Network: append-only, hash-based operational identity infrastructure for humans, AI and autonomous systems. EU-first. Deterministic. Fail-closed." />
-  <meta name="robots" content="index,follow" />
-  <meta name="theme-color" content="#0b0f14" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>IPR Network — Platform</title>
+  <meta name="description" content="IPR Network Platform Index: status, nodi, ledger, anchor. Fail-closed verification surface."/>
+  <meta name="theme-color" content="#0b0f14"/>
 
   <style>
     :root{
-      --bg:#0b0f14;
-      --panel:#0f1620;
-      --accent:#00ffe1;
-      --text:#e7f2ff;
-      --muted:#8aa0b5;
-      --border:#1b2735;
+      --bg:#0b0f14; --panel:#0f1620; --accent:#00ffe1; --text:#e7f2ff;
+      --muted:#8aa0b5; --border:#1b2735; --bad:#ff5577; --ok:#00ffe1; --warn:#ffcc66;
     }
     *{ box-sizing:border-box; }
     body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
+      margin:0; background:var(--bg); color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
     }
-    .wrap{ max-width:1100px; margin:0 auto; padding:56px 18px; }
-    .badge{
-      display:inline-block;
-      border:1px solid var(--accent);
-      color:var(--accent);
-      padding:6px 12px;
-      border-radius:6px;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-    }
-    h1{ font-size:40px; margin:14px 0 10px; }
-    p{ color:var(--muted); line-height:1.6; margin:0 0 14px; }
-    .btns{ margin-top:18px; }
-    a.btn{
-      display:inline-block;
-      border:1px solid var(--accent);
-      color:var(--accent);
-      text-decoration:none;
-      padding:12px 16px;
-      border-radius:10px;
-      margin:8px 10px 0 0;
-      font-size:14px;
-    }
-    a.btn:hover{ filter:brightness(1.15); }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-      gap:14px;
-      margin-top:18px;
-    }
-    .card{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:16px;
-      min-height:92px;
-    }
+    .wrap{ max-width:1180px; margin:0 auto; padding:56px 18px 44px; }
+    h1{ font-size:34px; margin:0 0 8px; letter-spacing:.2px; }
+    p{ color:var(--muted); line-height:1.65; margin:0 0 14px; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ filter:brightness(1.15); }
+    .nav{ display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 18px; }
+    .pill{ border:1px solid var(--border); border-radius:999px; padding:8px 12px; color:var(--muted); font-size:13px; display:inline-flex; gap:8px; align-items:center;}
+    .pill b{ color:var(--text); font-weight:600; }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:16px; }
+    .card{ background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; }
     .k{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
-    .v{ margin-top:6px; color:var(--accent); font-size:18px; }
-    .section{ padding:34px 0; border-top:1px solid var(--border); margin-top:34px; }
-    h2{ font-size:22px; margin:0 0 10px; }
-    ul{ margin:10px 0 0 18px; color:var(--muted); line-height:1.7; }
-    .footer{
-      margin-top:44px;
-      padding-top:22px;
-      border-top:1px solid var(--border);
-      color:var(--muted);
-      font-size:13px;
+    .v{ margin-top:6px; font-size:18px; word-break:break-word; }
+    .v.ok{ color:var(--ok); }
+    .v.bad{ color:var(--bad); }
+    .v.warn{ color:var(--warn); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .btn{
+      border:1px solid var(--accent); background:transparent; color:var(--accent);
+      padding:10px 14px; border-radius:12px; cursor:pointer; font-size:14px;
     }
-    code{ color:var(--accent); }
+    .btn:hover{ filter:brightness(1.15); }
+    .btn.secondary{ border-color:var(--border); color:var(--muted); }
+    .mono{
+      background:#05080c; border:1px solid var(--border); border-radius:14px;
+      padding:14px; overflow:auto;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+      font-size:12.6px; line-height:1.6; color:var(--text);
+      white-space:pre-wrap;
+    }
+    table{ width:100%; border-collapse:collapse; margin-top:8px; }
+    th,td{ text-align:left; padding:10px 8px; border-top:1px solid var(--border); vertical-align:top; }
+    th{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+    td{ color:var(--text); font-size:13.5px; }
+    .tag{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--muted); font-size:12.5px;}
+    .dot{ width:8px; height:8px; border-radius:999px; background:var(--muted); display:inline-block;}
+    .dot.ok{ background:var(--ok); }
+    .dot.bad{ background:var(--bad); }
+    .dot.warn{ background:var(--warn); }
+    .foot{ margin-top:18px; color:var(--muted); font-size:12.5px; line-height:1.6; }
+    code{ color:var(--text); }
   </style>
 </head>
 
 <body>
-  <main class="wrap">
-    <span class="badge">EU Operational Layer</span>
-    <h1>IPR Network</h1>
-    <p>
-      European operational identity infrastructure for humans, AI and autonomous systems.
-      Append-only identity evolution, deterministic verification, fail-closed enforcement.
-    </p>
+<main class="wrap">
+  <h1>IPR Network — Platform</h1>
+  <p>
+    Telemetria pubblica della rete: registry, nodi, ledger ed anchor.
+    La verifica completa è in <a href="./verify/">/verify</a> (fail-closed).
+  </p>
 
-    <div class="btns">
-      <a class="btn" href="./status/">Network Status</a>
-      <a class="btn" href="./verify/">Verify (Fail-Closed)</a>
-      <a class="btn" href="./nodes/registry.json">Node Registry</a>
-      <a class="btn" href="./node-pack/">Node Pack</a>
-      <a class="btn" href="https://manuelcoletta1-source.github.io/hermeticum-bce-platform/">HBCE Platform Gateway</a>
-    </div>
+  <div class="nav">
+    <a class="pill" href="./verify/"><b>Verify</b></a>
+    <a class="pill" href="./spec/">Spec</a>
+    <a class="pill" href="./tools/sha256/">SHA-256 Tool</a>
+    <a class="pill" href="./nodes/registry.json">Registry</a>
+    <a class="pill" href="./events/index.json">Events Index</a>
+    <a class="pill" href="./status/">Status</a>
+  </div>
 
-    <section class="section">
-      <h2>What this repo is</h2>
-      <p>
-        This repository publishes a public, static, verifiable surface for the IPR Network:
-        status visibility, node registry, deployment surface, and deterministic verification panels.
-      </p>
-
-      <div class="grid">
-        <div class="card">
-          <div class="k">Mode</div>
-          <div class="v">APPEND-ONLY</div>
-        </div>
-        <div class="card">
-          <div class="k">Verification</div>
-          <div class="v">DETERMINISTIC HASH</div>
-        </div>
-        <div class="card">
-          <div class="k">Failure Model</div>
-          <div class="v">FAIL-CLOSED</div>
-        </div>
-        <div class="card">
-          <div class="k">Data Custody</div>
-          <div class="v">NONE (HASH-ONLY)</div>
-        </div>
+  <div class="grid">
+    <div class="card">
+      <div class="k">Global Status</div>
+      <div id="status" class="v warn">LOADING…</div>
+      <div class="row">
+        <span class="tag"><span id="dot" class="dot warn"></span><span id="statusHint">fetching registry + events index</span></span>
       </div>
-    </section>
-
-    <section class="section">
-      <h2>Operational domains</h2>
-      <ul>
-        <li>Robotics and humanoid systems</li>
-        <li>Autonomous vehicles</li>
-        <li>Drone fleets</li>
-        <li>Industrial AI / AI operators</li>
-        <li>B2B and B2G identity networks</li>
-      </ul>
-    </section>
-
-    <section class="section">
-      <h2>Interoperability</h2>
-      <p>
-        Nodes are compatible if they implement deterministic verification and append-only
-        identity continuity under EU-first rules. A node may operate standalone and still be
-        considered network-compatible when registry and proofs match.
-      </p>
-      <p>
-        Registry file: <code>./nodes/registry.json</code>
-      </p>
-    </section>
-
-    <div class="footer">
-      IPR Network — European Operational Identity Infrastructure<br/>
-      Jurisdiction: EU · Governance: audit-first · Public exposure: hash-only
+      <div class="row">
+        <button id="refresh" class="btn">Refresh</button>
+        <a class="btn secondary" href="./verify/">Run full verify</a>
+      </div>
     </div>
-  </main>
+
+    <div class="card">
+      <div class="k">Registry canonical (declared)</div>
+      <div id="regDeclared" class="v">—</div>
+      <div class="k" style="margin-top:12px">Registry URL</div>
+      <div class="v"><a href="./nodes/registry.json">/nodes/registry.json</a></div>
+    </div>
+
+    <div class="card">
+      <div class="k">Events index canonical (declared)</div>
+      <div id="idxDeclared" class="v">—</div>
+      <div class="k" style="margin-top:12px">Events Index URL</div>
+      <div class="v"><a href="./events/index.json">/events/index.json</a></div>
+    </div>
+
+    <div class="card">
+      <div class="k">Latest Event</div>
+      <div id="latestEvent" class="v">—</div>
+      <div class="k" style="margin-top:12px">Anchors (from EVENT 000005 if present)</div>
+      <div id="anchors" class="mono">—</div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+    <div class="card" style="grid-column:1/-1">
+      <div class="k">Nodes</div>
+      <div id="nodesWrap" class="mono">LOADING…</div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <div class="k">Ledger (last 5 entries)</div>
+      <div id="ledgerWrap">LOADING…</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="k">Notes</div>
+    <div class="foot">
+      Questa pagina fa una telemetria “soft” (fetch + lettura campi dichiarati).<br/>
+      La verifica deterministica e fail-closed completa è in <code>/verify/</code>.
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const REGISTRY_URL = "./nodes/registry.json";
+  const EVENTS_INDEX_URL = "./events/index.json";
+  const EVENTS_PREFIX = "./events/";
+
+  const el = (id) => document.getElementById(id);
+
+  function setStatus(kind, text, hint){
+    const s = el("status");
+    const dot = el("dot");
+    const h = el("statusHint");
+
+    s.className = "v " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "warn");
+    dot.className = "dot " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "warn");
+
+    s.textContent = text;
+    h.textContent = hint || "";
+  }
+
+  async function fetchJson(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    const txt = await res.text();
+    try { return JSON.parse(txt); }
+    catch { throw new Error(`JSON parse failed for ${url}`); }
+  }
+
+  function safeStr(x){ return (typeof x === "string" && x.trim().length) ? x.trim() : null; }
+
+  function pad6(n){
+    const s = String(n);
+    return s.padStart(6, "0");
+  }
+
+  function renderNodes(reg){
+    const nodes = Array.isArray(reg.nodes) ? reg.nodes : [];
+    if(!nodes.length) return "NODES :: EMPTY (fail-closed)";
+
+    const lines = [];
+    for(const n of nodes){
+      const id = safeStr(n?.node_id) || "MISSING";
+      const role = safeStr(n?.role) || "UNSET";
+      const state = safeStr(n?.state) || "UNSET";
+      lines.push(`${id} :: role=${role} state=${state}`);
+
+      const eps = n?.endpoints || {};
+      const keys = Object.keys(eps);
+      for(const k of keys){
+        const v = safeStr(eps[k]);
+        if(v) lines.push(`  - ${k}: ${v}`);
+      }
+
+      const proofs = n?.proofs || null;
+      if(proofs && typeof proofs === "object"){
+        const integ = safeStr(proofs.integrity_sha256);
+        if(integ) lines.push(`  - proofs.integrity_sha256: ${integ}`);
+      }
+
+      lines.push("");
+    }
+    return lines.join("\n").trim();
+  }
+
+  function renderLedger(index){
+    const entries = Array.isArray(index.entries) ? index.entries : [];
+    if(!entries.length){
+      return `<div class="mono">EVENTS_ENTRIES :: EMPTY (fail-closed)</div>`;
+    }
+
+    const last = entries[entries.length - 1];
+    const lastId = (typeof last?.event_id === "number") ? last.event_id : null;
+    const lastPath = safeStr(last?.path);
+
+    el("latestEvent").innerHTML = lastId !== null && lastPath
+      ? `#${lastId} — <a href="${EVENTS_PREFIX + lastPath}">${lastPath}</a>`
+      : "—";
+
+    const slice = entries.slice(Math.max(0, entries.length - 5));
+    let html = `<table>
+      <thead><tr>
+        <th>event_id</th><th>path</th><th>sha256</th><th>prev</th>
+      </tr></thead><tbody>`;
+
+    for(const e of slice){
+      const id = (typeof e?.event_id === "number") ? e.event_id : "—";
+      const path = safeStr(e?.path) || "—";
+      const sha = safeStr(e?.sha256) || "—";
+      const prev = safeStr(e?.prev_sha256) || "—";
+      const link = (path !== "—") ? `<a href="${EVENTS_PREFIX + path}">${path}</a>` : path;
+
+      html += `<tr>
+        <td>${id}</td>
+        <td>${link}</td>
+        <td><code>${sha}</code></td>
+        <td><code>${prev}</code></td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    return html;
+  }
+
+  async function tryLoadAnchors(index){
+    const entries = Array.isArray(index.entries) ? index.entries : [];
+    const has5 = entries.find(e => e && e.path === "000005.json");
+    if(!has5){
+      el("anchors").textContent = "No EVENT 000005 found in events index.";
+      return;
+    }
+    try{
+      const ev5 = await fetchJson(EVENTS_PREFIX + "000005.json");
+      const a = ev5?.anchors || {};
+      const btc = safeStr(a?.btc) || "UNSET";
+      const evm = safeStr(a?.evm) || "UNSET";
+      const ipfs = safeStr(a?.ipfs) || "UNSET";
+      const tgt = ev5?.anchor_target || {};
+      const idxSha = safeStr(tgt?.events_index_sha256_canonical) || "UNSET";
+
+      el("anchors").textContent =
+        `EVENT 000005 :: NETWORK_ANCHORED\n` +
+        `target.events_index_sha256_canonical: ${idxSha}\n\n` +
+        `anchors.btc:  ${btc}\n` +
+        `anchors.evm:  ${evm}\n` +
+        `anchors.ipfs: ${ipfs}\n`;
+    }catch(err){
+      el("anchors").textContent = `Anchors load failed: ${err && err.message ? err.message : String(err)}`;
+    }
+  }
+
+  function softValidate(reg, idx){
+    // "soft" because we trust declared fields, we don't recompute hashes here (verify page does).
+    const regDeclared = safeStr(reg?.nodes?.find(n => n?.node_id === "NODE-0001")?.proofs?.integrity_sha256);
+    const idxDeclared = safeStr(idx?.integrity?.self_hash_sha256);
+
+    el("regDeclared").textContent = regDeclared || "MISSING/UNSET";
+    el("idxDeclared").textContent = idxDeclared || "MISSING/UNSET";
+
+    if(!regDeclared || !idxDeclared || regDeclared === "UNSET" || idxDeclared === "UNSET"){
+      return { ok:false, reason:"declared fields missing/UNSET" };
+    }
+
+    const nodes = Array.isArray(reg.nodes) ? reg.nodes : [];
+    const deployments = nodes.filter(n => safeStr(n?.endpoints?.head) && safeStr(n?.endpoints?.proofs));
+    if(deployments.length < 1){
+      return { ok:false, reason:"no deployment nodes with head+proofs" };
+    }
+
+    const entries = Array.isArray(idx.entries) ? idx.entries : [];
+    if(entries.length < 1){
+      return { ok:false, reason:"events index empty" };
+    }
+
+    return { ok:true, reason:`nodes=${deployments.length} events=${entries.length}` };
+  }
+
+  async function load(){
+    setStatus("warn", "LOADING…", "fetching registry + events index");
+    el("nodesWrap").textContent = "LOADING…";
+    el("ledgerWrap").innerHTML = "LOADING…";
+    el("anchors").textContent = "—";
+    el("latestEvent").textContent = "—";
+
+    try{
+      const [reg, idx] = await Promise.all([ fetchJson(REGISTRY_URL), fetchJson(EVENTS_INDEX_URL) ]);
+
+      el("nodesWrap").textContent = renderNodes(reg);
+      el("ledgerWrap").innerHTML = renderLedger(idx);
+
+      await tryLoadAnchors(idx);
+
+      const v = softValidate(reg, idx);
+      if(v.ok) setStatus("ok", "VALID (soft)", v.reason);
+      else setStatus("bad", "INVALID (soft)", v.reason);
+
+    }catch(err){
+      setStatus("bad", "INVALID (soft)", err && err.message ? err.message : String(err));
+      el("nodesWrap").textContent = "LOAD FAILED.";
+      el("ledgerWrap").innerHTML = `<div class="mono">LOAD FAILED.</div>`;
+      el("anchors").textContent = "—";
+    }
+  }
+
+  el("refresh").addEventListener("click", () => load());
+  load();
+})();
+</script>
 </body>
 </html>
