@@ -10,11 +10,11 @@
       "purpose": [
         "SIGN_EVENTS"
       ],
-      "pubkey_base64": "UNSET"
+      "pubkey_base64": "XdwnhC/gWrYjvSHIr89ULWjZqsKS0aeLKInVHbDctyk="
     }
   ],
   "integrity": {
-    "self_hash_sha256": "21dc1faa2e1bfc16d570bd1974eef0759b4261461f76c5334424b66a8f32ca1d",
+    "self_hash_sha256": "UNSET",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
