@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Network Status — IPR Network (EU Operational Layer)</title>
+  <meta name="description" content="Public visibility of IPR Network status. Deterministic. Append-only. Fail-closed." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#0b0f14" />
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --accent:#00ffe1;
+      --text:#e7f2ff;
+      --muted:#8aa0b5;
+      --border:#1b2735;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
+    .wrap{ max-width:1050px; margin:0 auto; padding:56px 18px; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ filter:brightness(1.15); }
+    h1{ font-size:34px; margin:0 0 8px; }
+    p{ color:var(--muted); line-height:1.6; margin:0 0 14px; }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:14px;
+      margin-top:18px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+    }
+    .k{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+    .v{ margin-top:6px; color:var(--accent); font-size:18px; }
+    .log{
+      margin-top:24px;
+      background:#05080c;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:13px;
+      color:var(--accent);
+      line-height:1.6;
+      white-space:pre-wrap;
+    }
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .nav{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .pill{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:8px 12px;
+      color:var(--muted);
+      font-size:13px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div>
+        <h1>Network Status</h1>
+        <p>Public visibility surface for the IPR Network.</p>
+        <div class="nav">
+          <a class="pill" href="../">Home</a>
+          <a class="pill" href="../nodes/registry.json">Node Registry</a>
+          <a class="pill" href="https://manuelcoletta1-source.github.io/hermeticum-bce-platform/">HBCE Platform</a>
+        </div>
+      </div>
+      <div class="pill">EU OPERATIONAL LAYER</div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><div class="k">Network State</div><div class="v">ACTIVE</div></div>
+      <div class="card"><div class="k">Visible Nodes</div><div class="v">1</div></div>
+      <div class="card"><div class="k">Protocol</div><div class="v">HBCE-REGISTRY-v3</div></div>
+      <div class="card"><div class="k">Mode</div><div class="v">APPEND-ONLY</div></div>
+      <div class="card"><div class="k">Verification</div><div class="v">DETERMINISTIC</div></div>
+      <div class="card"><div class="k">Failure Model</div><div class="v">FAIL-CLOSED</div></div>
+    </div>
+
+    <div class="log">NODE-0001 :: VISIBLE
+STATUS     :: ONLINE
+ROLE       :: PUBLIC STATUS SURFACE
+SYNC       :: STANDALONE
+DATA       :: HASH-ONLY
+FAIL-MODE  :: CLOSED
+REGISTRY   :: ../nodes/registry.json</div>
+  </main>
+</body>
+</html>
