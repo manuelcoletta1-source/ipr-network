@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>IPR Network — Spec (Minimale)</title>
+  <meta name="description" content="Spec minima del protocollo IPR Network: canonical hashing, ledger append-only, fail-closed verification."/>
+  <meta name="theme-color" content="#0b0f14"/>
+
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1620; --accent:#00ffe1; --text:#e7f2ff;
+      --muted:#8aa0b5; --border:#1b2735;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
+    .wrap{ max-width:980px; margin:0 auto; padding:56px 18px; }
+    h1{ font-size:34px; margin:0 0 10px; }
+    h2{ font-size:20px; margin:26px 0 10px; }
+    p{ color:var(--muted); line-height:1.7; margin:0 0 12px; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ filter:brightness(1.15); }
+    .nav{ display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 18px; }
+    .pill{ border:1px solid var(--border); border-radius:999px; padding:8px 12px; color:var(--muted); font-size:13px; }
+
+    .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin:14px 0; }
+    .mono{
+      background:#05080c; border:1px solid var(--border); border-radius:14px;
+      padding:14px; overflow:auto;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+      font-size:12.8px; line-height:1.6; color:var(--text);
+      white-space:pre;
+    }
+    ul{ margin:8px 0 0 18px; color:var(--muted); line-height:1.7; }
+    li{ margin:6px 0; }
+    b{ color:var(--text); }
+    code{ color:var(--text); }
+  </style>
+</head>
+
+<body>
+<main class="wrap">
+  <h1>IPR Network — Spec (Minimale)</h1>
+  <p>
+    Questa pagina descrive la spec minima per verificare pubblicamente gli artefatti della rete:
+    <b>registry</b>, <b>node-pack</b>, e <b>events ledger</b>.
+    Il sistema è progettato per essere <b>append-only</b> e <b>fail-closed</b>.
+  </p>
+
+  <div class="nav">
+    <a class="pill" href="../">Home</a>
+    <a class="pill" href="../verify/">Verify</a>
+    <a class="pill" href="../tools/sha256/">SHA-256 Tool</a>
+    <a class="pill" href="../nodes/registry.json">Registry</a>
+    <a class="pill" href="../events/index.json">Events Index</a>
+  </div>
+
+  <div class="card">
+    <h2>1) Obiettivi</h2>
+    <ul>
+      <li><b>Verificabilità pubblica</b>: chiunque può verificare integrità e catena con un browser.</li>
+      <li><b>Fail-closed</b>: qualsiasi mismatch / campo UNSET ⇒ stato INVALID.</li>
+      <li><b>Append-only</b>: si aggiungono eventi; non si riscrivono eventi già pubblicati.</li>
+      <li><b>Hash-only</b>: nessuna custodia identitaria obbligatoria nei dati pubblici.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>2) Canonical Hashing (anti self-hash loop)</h2>
+    <p>
+      Per evitare loop (un file che include il proprio hash cambia ogni volta),
+      l’hash usato per la verifica è <b>CANONICAL SHA-256</b>:
+      si calcola SHA-256 dopo aver ignorato specifici campi “dichiarativi”.
+    </p>
+
+    <p><b>Regole CANONICAL:</b></p>
+    <ul>
+      <li>Per ogni JSON che contiene <code>integrity.self_hash_sha256</code>:
+        durante il calcolo canonical, quel campo viene ignorato (o sostituito con un placeholder deterministico).</li>
+      <li>Per <b>registry</b> (<code>proto</code> che inizia con <code>HBCE-REGISTRY</code>):
+        durante il calcolo canonical, ogni <code>nodes[].proofs.integrity_sha256</code> viene ignorato.</li>
+    </ul>
+
+    <p class="mono">Pseudo:
+canonical(obj):
+  if obj.integrity.self_hash_sha256 exists:
+     obj.integrity.self_hash_sha256 = "IGNORED_FOR_CANONICAL_HASH"
+
+  if obj.proto startsWith "HBCE-REGISTRY":
+     for each node in obj.nodes:
+        if node.proofs.integrity_sha256 exists:
+           node.proofs.integrity_sha256 = "IGNORED_FOR_CANONICAL_HASH"
+
+  return JSON.stringify(obj)
+
+canonical_sha256(json_text):
+  obj = JSON.parse(json_text)
+  return sha256( canonical(obj) )</p>
+  </div>
+
+  <div class="card">
+    <h2>3) Registry</h2>
+    <p>
+      Il registry elenca i nodi e gli endpoint pubblici.
+      Il campo dichiarativo di integrità del registry vive in:
+      <code>NODE-0001.proofs.integrity_sha256</code>
+      e deve essere uguale all’hash canonical del file registry.
+    </p>
+    <p class="mono">File: /nodes/registry.json
+Declared registry integrity:
+  nodes[].proofs.integrity_sha256 (on NODE-0001)
+
+Verification:
+  declared == canonical_sha256(registry.json)</p>
+  </div>
+
+  <div class="card">
+    <h2>4) Node-Pack (head/proofs)</h2>
+    <p>
+      Un nodo pubblica almeno:
+      <code>node-pack/head.json</code> e <code>node-pack/proofs.json</code>.
+      Entrambi includono <code>integrity.self_hash_sha256</code> che deve combaciare con
+      l’hash canonical del rispettivo file.
+    </p>
+    <p class="mono">Files:
+  /node-pack/head.json
+  /node-pack/proofs.json
+
+Verification:
+  integrity.self_hash_sha256 == canonical_sha256(file)</p>
+  </div>
+
+  <div class="card">
+    <h2>5) Events Ledger (append-only)</h2>
+    <p>
+      Il ledger è composto da:
+      <b>index</b> + <b>event files</b>.
+    </p>
+
+    <p><b>Index</b>: <code>/events/index.json</code></p>
+    <ul>
+      <li>Contiene <code>entries[]</code> in ordine.</li>
+      <li>Ogni entry contiene: <code>event_id</code>, <code>path</code>, <code>sha256</code>, <code>prev_sha256</code>.</li>
+      <li><code>integrity.self_hash_sha256</code> dell’index deve combaciare con canonical hash dell’index.</li>
+    </ul>
+
+    <p><b>Event</b>: <code>/events/00000N.json</code></p>
+    <ul>
+      <li>Ogni evento contiene <code>prev_event_sha256</code> che deve combaciare con l’evento precedente.</li>
+      <li><code>integrity.self_hash_sha256</code> deve combaciare con canonical hash dell’evento.</li>
+    </ul>
+
+    <p class="mono">Ledger verification (full):
+1) verify index self-hash (canonical)
+2) for i in entries:
+     expected_prev = (i==0) ? "GENESIS" : entries[i-1].sha256
+
+     index.prev_sha256 must equal expected_prev
+     event.prev_event_sha256 must equal expected_prev
+
+     canonical_sha256(event_file) must equal:
+        - entries[i].sha256
+        - event.integrity.self_hash_sha256</p>
+  </div>
+
+  <div class="card">
+    <h2>6) Fail-Closed</h2>
+    <p>
+      Qualsiasi errore (fetch, parse, mismatch, UNSET) ⇒ <b>INVALID (FAIL-CLOSED)</b>.
+      Questo rende il sistema robusto contro manomissioni e pubblicazioni incomplete.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>7) Implementazioni di riferimento</h2>
+    <ul>
+      <li><b>Verifier</b>: <code>/verify/</code></li>
+      <li><b>SHA-256 tool</b>: <code>/tools/sha256/</code></li>
+    </ul>
+  </div>
+
+  <p style="margin-top:22px;color:var(--muted)">
+    Spec minimale — estendibile senza rompere la verificabilità (append-only).
+  </p>
+</main>
+</body>
+</html>
