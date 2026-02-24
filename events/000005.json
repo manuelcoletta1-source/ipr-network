@@ -1,0 +1,66 @@
+{
+  "proto": "HBCE-NETWORK-EVENT-v1",
+  "event_id": 5,
+  "event_type": "NETWORK_ANCHORED",
+  "network": "EU",
+  "timestamp_utc": "2026-02-24T00:00:00Z",
+  "actor": "ROOT_REGISTRY",
+  "subject": "EU_NETWORK_GENESIS",
+  "description": "External anchors recorded for auditability (BTC/EVM/IPFS) referencing events index canonical hash.",
+  "anchor_target": {
+    "events_index_url": "https://manuelcoletta1-source.github.io/ipr-network/events/index.json",
+    "events_index_sha256_canonical": "9f7b3bb96b47272382ee2387fb65c494fabdf045a14e221f80df43186757e993"
+  },
+  "anchors": {
+    "btc": "9eeb29b67f4a649d563b95560fda5ddaa84777b13515f936837fc93d28554b45",
+    "evm": "0xf65eb314a1edd392fc15fcd9c65d22060ca39cbac04fcfcb48b978062500a7eff",
+    "ipfs": "bafkreidhv73vqrxoweog33ls3rnwrgyicio234pcuks6mnep76yh56pj5q"
+  },
+  "meta": {
+    "core_proto": "HBCE-CORE-v3",
+    "issuer": "HERMETICUM B.C.E. S.r.l.",
+    "jurisdiction": "EU",
+    "mode": "PERMISSIONLESS",
+    "mutability": "APPEND_ONLY",
+    "policy": [
+      "UE_FIRST",
+      "AUDIT_FIRST",
+      "FAIL_CLOSED",
+      "HASH_ONLY",
+      "APPEND_ONLY",
+      "NO_IDENTITY_CUSTODY"
+    ],
+    "capabilities": [
+      "ISSUE_BASE_IPR",
+      "ISSUE_OPERATOR",
+      "VALIDATE_NETWORK"
+    ],
+    "network": {
+      "entry": "IPR_BASE_VALID",
+      "operator": "VALID_OPERATOR_LICENSE",
+      "rule": "APPEND_ONLY_CHAIN",
+      "topology": "FEDERATED",
+      "type": "EU_OPERATOR_NETWORK"
+    },
+    "roots": {
+      "ai": {
+        "id": "IPR-AI-0001",
+        "nickname": "JOKER-C2",
+        "role": "C2_CORE",
+        "status": "ACTIVE"
+      },
+      "human": {
+        "id": "IPR-3",
+        "nickname": "Manuel Coletta",
+        "role": "ORIGIN_OPERATOR",
+        "status": "ACTIVE"
+      }
+    },
+    "status": "ACTIVE"
+  },
+  "prev_event_sha256": "e5437998c68193814eb79ca4e99093d0cf50711ddc14676f3ecc6954ef7531f4",
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
