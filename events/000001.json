@@ -8,7 +8,7 @@
   "note": "First public append-only event for IPR Network ledger.",
   "prev_event_sha256": "GENESIS",
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "3b919d199b393e440dcb5e3b787a0a86b30d4782797cc642d3ea18aa25b7d4e6",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
