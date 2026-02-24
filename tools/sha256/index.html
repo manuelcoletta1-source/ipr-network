@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>HBCE Tool — SHA-256 (Deterministic)</title>
+  <meta name="robots" content="noindex,nofollow"/>
+  <meta name="theme-color" content="#0b0f14"/>
+
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1620; --accent:#00ffe1; --text:#e7f2ff;
+      --muted:#8aa0b5; --border:#1b2735; --bad:#ff5577;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
+    .wrap{max-width:980px;margin:0 auto;padding:52px 18px}
+    h1{margin:0 0 8px;font-size:30px}
+    p{margin:0 0 14px;color:var(--muted);line-height:1.6}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{filter:brightness(1.15)}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:18px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+    label{display:block;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+    input, textarea{
+      width:100%; border:1px solid var(--border); background:#05080c; color:var(--text);
+      border-radius:12px; padding:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:13px;
+    }
+    textarea{min-height:140px;resize:vertical}
+    button{
+      margin-top:10px; border:1px solid var(--accent); background:transparent; color:var(--accent);
+      padding:10px 14px; border-radius:12px; cursor:pointer; font-size:14px;
+    }
+    button:hover{filter:brightness(1.15)}
+    .out{
+      margin-top:10px; padding:12px; border-radius:12px;
+      background:#000; border:1px solid var(--border);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color:var(--accent); font-size:13px; line-height:1.6; white-space:pre-wrap;
+    }
+    .err{color:var(--bad)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .pill{border:1px solid var(--border);border-radius:999px;padding:8px 12px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+
+<body>
+<main class="wrap">
+  <h1>SHA-256 Tool (Browser)</h1>
+  <p>
+    Deterministic SHA-256 calculator using WebCrypto.
+    Use it to compute integrity hashes for <code>head.json</code>, <code>registry.json</code>, and any other public artifacts.
+  </p>
+
+  <div class="row">
+    <a class="pill" href="../../">Home</a>
+    <a class="pill" href="../../status/">Network Status</a>
+    <a class="pill" href="../../nodes/registry.json">Node Registry</a>
+    <a class="pill" href="../../node-pack/head.json">Node-Pack head.json</a>
+  </div>
+
+  <div class="grid">
+
+    <section class="card">
+      <label>1) Hash a URL (fetch text)</label>
+      <input id="url" placeholder="https://.../file.json" />
+      <button id="btnUrl">Compute SHA-256 from URL</button>
+      <div id="outUrl" class="out">Output will appear here.</div>
+    </section>
+
+    <section class="card">
+      <label>2) Hash pasted content (exact bytes)</label>
+      <textarea id="txt" placeholder="Paste JSON here (exact)."></textarea>
+      <button id="btnTxt">Compute SHA-256 from Text</button>
+      <div id="outTxt" class="out">Output will appear here.</div>
+      <p style="margin-top:10px">
+        Note: JSON must be hashed exactly as served. Best practice is hashing via URL above.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  function toHex(buf){
+    const bytes = new Uint8Array(buf);
+    let hex = "";
+    for(let i=0;i<bytes.length;i++){
+      const h = bytes[i].toString(16).padStart(2,"0");
+      hex += h;
+    }
+    return hex;
+  }
+
+  async function sha256Bytes(bytes){
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return toHex(digest);
+  }
+
+  async function sha256Text(s){
+    const enc = new TextEncoder();
+    return sha256Bytes(enc.encode(s));
+  }
+
+  async function fetchText(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return res.text();
+  }
+
+  function setOut(el, msg, isErr){
+    el.innerHTML = isErr ? ('<span class="err">' + msg + '</span>') : msg;
+  }
+
+  document.getElementById("btnUrl").addEventListener("click", async () => {
+    const out = document.getElementById("outUrl");
+    const url = (document.getElementById("url").value || "").trim();
+    if(!url) return setOut(out, "Missing URL.", true);
+    try{
+      setOut(out, "Fetching...", false);
+      const txt = await fetchText(url);
+      const h = await sha256Text(txt);
+      setOut(out, "sha256: " + h + "\nbytes: " + new TextEncoder().encode(txt).length, false);
+    }catch(e){
+      setOut(out, "ERROR: " + (e && e.message ? e.message : String(e)), true);
+    }
+  });
+
+  document.getElementById("btnTxt").addEventListener("click", async () => {
+    const out = document.getElementById("outTxt");
+    const txt = document.getElementById("txt").value || "";
+    if(!txt.trim()) return setOut(out, "Paste content first.", true);
+    try{
+      const h = await sha256Text(txt);
+      setOut(out, "sha256: " + h + "\nbytes: " + new TextEncoder().encode(txt).length, false);
+    }catch(e){
+      setOut(out, "ERROR: " + (e && e.message ? e.message : String(e)), true);
+    }
+  });
+})();
+</script>
+</body>
+</html>
