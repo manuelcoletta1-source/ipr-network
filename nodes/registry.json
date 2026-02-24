@@ -31,7 +31,7 @@
         "status": "https://manuelcoletta1-source.github.io/ipr-network/status/"
       },
       "proofs": {
-        "integrity_sha256": "UNSET",
+        "integrity_sha256": "898e0ca6fb42265d0b59e50b871988f70ee607437e788e0b7054d884e2b0f13b",
         "method": "DETERMINISTIC_SHA256_CANONICAL"
       }
     },
