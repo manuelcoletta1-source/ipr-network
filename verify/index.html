@@ -18,7 +18,7 @@
       margin:0; background:var(--bg); color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
     }
-    .wrap{ max-width:1100px; margin:0 auto; padding:56px 18px; }
+    .wrap{ max-width:1120px; margin:0 auto; padding:56px 18px; }
     h1{ font-size:34px; margin:0 0 8px; }
     p{ color:var(--muted); line-height:1.6; margin:0 0 14px; }
     a{ color:var(--accent); text-decoration:none; }
@@ -60,7 +60,7 @@
 
     .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:14px; }
     input{
-      width:min(740px, 100%);
+      width:min(760px, 100%);
       border:1px solid var(--border);
       background:#05080c;
       color:var(--text);
@@ -78,13 +78,16 @@
   <h1>Verify (Fail-Closed)</h1>
   <p>
     Deterministic SHA-256 verification for public IPR Network artifacts.
-    Any mismatch = <b>INVALID</b>. Missing declared hashes = <b>INVALID</b>.
+    Any mismatch or UNSET = <b>INVALID</b>.
   </p>
 
   <div class="nav">
     <a class="pill" href="../">Home</a>
     <a class="pill" href="../status/">Network Status</a>
     <a class="pill" href="../nodes/registry.json">Node Registry</a>
+    <a class="pill" href="../node-pack/head.json">NODE-0002 head</a>
+    <a class="pill" href="../node-pack/proofs.json">NODE-0002 proofs</a>
+    <a class="pill" href="../events/index.json">Events Index</a>
     <a class="pill" href="../tools/sha256/">SHA-256 Tool</a>
   </div>
 
@@ -94,7 +97,7 @@
       <input id="registryUrl" value="https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json" />
       <button id="run">Run Verification</button>
     </div>
-    <div class="small">Tip: keep this URL stable. Verification uses <code>cache: no-store</code>.</div>
+    <div class="small">Verification uses <code>cache: no-store</code>. Stable URLs are mandatory for auditability.</div>
   </div>
 
   <div class="grid">
@@ -125,9 +128,7 @@
   function toHex(buf){
     const bytes = new Uint8Array(buf);
     let hex = "";
-    for(let i=0;i<bytes.length;i++){
-      hex += bytes[i].toString(16).padStart(2,"0");
-    }
+    for(let i=0;i<bytes.length;i++) hex += bytes[i].toString(16).padStart(2,"0");
     return hex;
   }
 
@@ -146,28 +147,8 @@
 
   function setStatus(ok){
     const el = document.getElementById("globalStatus");
-    if(ok){
-      el.textContent = "VALID";
-      el.className = "v ok";
-    }else{
-      el.textContent = "INVALID (FAIL-CLOSED)";
-      el.className = "v bad";
-    }
-  }
-
-  function line(s){ return String(s); }
-
-  function pickDeclaredIntegrity(reg){
-    // We store integrity in nodes[0].proofs.integrity_sha256 (NODE-0001).
-    // If absent => fail-closed.
-    try{
-      const nodes = Array.isArray(reg.nodes) ? reg.nodes : [];
-      const n1 = nodes.find(n => n && n.node_id === "NODE-0001");
-      const declared = n1 && n1.proofs ? n1.proofs.integrity_sha256 : null;
-      return (typeof declared === "string" && declared.trim()) ? declared.trim() : null;
-    }catch{
-      return null;
-    }
+    if(ok){ el.textContent = "VALID"; el.className = "v ok"; }
+    else { el.textContent = "INVALID (FAIL-CLOSED)"; el.className = "v bad"; }
   }
 
   function getNode(reg, nodeId){
@@ -175,41 +156,100 @@
     return nodes.find(n => n && n.node_id === nodeId) || null;
   }
 
-  async function verifyNodeHead(node){
-    // Verify head.json hash equals its declared self_hash_sha256.
-    // If node has no head endpoint, we skip head verification (but do NOT mark invalid).
-    // For NODE-0002 it exists and must be valid.
-    const endpoints = node && node.endpoints ? node.endpoints : {};
-    const headUrl = endpoints && typeof endpoints.head === "string" ? endpoints.head : null;
+  function pickDeclaredRegistryIntegrity(reg){
+    // Declared registry hash lives in NODE-0001.proofs.integrity_sha256
+    try{
+      const n1 = getNode(reg, "NODE-0001");
+      const v = n1 && n1.proofs && typeof n1.proofs.integrity_sha256 === "string"
+        ? n1.proofs.integrity_sha256.trim()
+        : null;
+      return (v && v.length) ? v : null;
+    }catch{ return null; }
+  }
 
-    const needsHead = node && node.node_id === "NODE-0002"; // strict for NODE-0002
-    if(!headUrl){
+  async function verifySelfHashedJson(url, label){
+    const txt = await fetchText(url);
+    const computed = await sha256Text(txt);
+
+    let obj = null;
+    try{ obj = JSON.parse(txt); } catch { obj = null; }
+
+    const declared = obj && obj.integrity && typeof obj.integrity.self_hash_sha256 === "string"
+      ? obj.integrity.self_hash_sha256.trim()
+      : null;
+
+    const ok = !!declared && declared !== "UNSET" && declared === computed.hash;
+    return { ok, label, url, declared, computed: computed.hash };
+  }
+
+  async function verifyEventsLedger(){
+    const indexUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/index.json";
+
+    // 1) verify index self-hash
+    const idxRes = await verifySelfHashedJson(indexUrl, "EVENTS_INDEX");
+    if(!idxRes.ok){
       return {
-        ok: !needsHead,
-        note: needsHead ? "NODE-0002 missing head endpoint (fail-closed)" : "No head endpoint; skipped",
-        computed: null,
-        declared: null,
-        url: null
+        ok: false,
+        lines: [
+          "EVENTS_INDEX_URL :: " + indexUrl,
+          "EVENTS_INDEX_DECLARED :: " + (idxRes.declared || "MISSING/UNSET"),
+          "EVENTS_INDEX_COMPUTED :: " + (idxRes.computed || "MISSING"),
+          "EVENTS_INDEX_RESULT :: FAIL"
+        ]
       };
     }
 
-    const headTxt = await fetchText(headUrl);
-    const headHash = await sha256Text(headTxt);
-    let headObj = null;
-    try{ headObj = JSON.parse(headTxt); } catch { headObj = null; }
+    // 2) parse index entries
+    const idxTxt = await fetchText(indexUrl);
+    const idx = JSON.parse(idxTxt);
+    const entries = Array.isArray(idx.entries) ? idx.entries : [];
+    if(entries.length < 1){
+      return { ok:false, lines:["EVENTS_ENTRIES :: EMPTY (fail-closed)"] };
+    }
 
-    const declared = headObj && headObj.integrity && typeof headObj.integrity.self_hash_sha256 === "string"
-      ? headObj.integrity.self_hash_sha256.trim()
+    // 3) verify first event declared sha + self-hash + chain prev
+    const e0 = entries[0];
+    const path = e0 && typeof e0.path === "string" ? e0.path : null;
+    const declaredSha = e0 && typeof e0.sha256 === "string" ? e0.sha256.trim() : null;
+    const prevDeclared = e0 && typeof e0.prev_sha256 === "string" ? e0.prev_sha256.trim() : null;
+
+    if(!path) return { ok:false, lines:["EVENT_1_PATH :: MISSING (fail-closed)"] };
+
+    const eventUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/" + path;
+    const eventTxt = await fetchText(eventUrl);
+    const eventComputed = await sha256Text(eventTxt);
+
+    let eventObj = null;
+    try{ eventObj = JSON.parse(eventTxt); } catch { eventObj = null; }
+
+    const eventSelfDeclared = eventObj && eventObj.integrity && typeof eventObj.integrity.self_hash_sha256 === "string"
+      ? eventObj.integrity.self_hash_sha256.trim()
       : null;
 
-    const ok = !!declared && declared !== "UNSET" && declared === headHash.hash;
-    return {
-      ok,
-      note: ok ? "Head integrity OK" : "Head integrity mismatch or UNSET (fail-closed)",
-      computed: headHash.hash,
-      declared: declared,
-      url: headUrl
-    };
+    const eventPrevField = eventObj && typeof eventObj.prev_event_sha256 === "string"
+      ? eventObj.prev_event_sha256.trim()
+      : null;
+
+    const okDeclaredSha = !!declaredSha && declaredSha !== "UNSET" && declaredSha === eventComputed.hash;
+    const okSelf = !!eventSelfDeclared && eventSelfDeclared !== "UNSET" && eventSelfDeclared === eventComputed.hash;
+
+    // genesis rules: index prev must be GENESIS and event prev field must be GENESIS
+    const okPrev = (prevDeclared === "GENESIS") && (eventPrevField === "GENESIS");
+
+    const okAll = idxRes.ok && okDeclaredSha && okSelf && okPrev;
+
+    const lines = [
+      "EVENTS_INDEX_RESULT :: OK",
+      "EVENT_1_URL :: " + eventUrl,
+      "EVENT_1_INDEX_DECLARED_SHA :: " + (declaredSha || "MISSING/UNSET"),
+      "EVENT_1_COMPUTED_SHA :: " + eventComputed.hash,
+      "EVENT_1_SELF_DECLARED_SHA :: " + (eventSelfDeclared || "MISSING/UNSET"),
+      "EVENT_1_PREV_INDEX :: " + (prevDeclared || "MISSING"),
+      "EVENT_1_PREV_FIELD :: " + (eventPrevField || "MISSING"),
+      "EVENT_1_RESULT :: " + (okAll ? "OK" : "FAIL")
+    ];
+
+    return { ok: okAll, lines };
   }
 
   async function run(){
@@ -223,18 +263,18 @@
       return;
     }
 
-    report.push(line("VERIFY :: START"));
-    report.push(line("REGISTRY_URL :: " + url));
+    report.push("VERIFY :: START");
+    report.push("REGISTRY_URL :: " + url);
     report.push("");
 
-    // 1) Fetch registry + compute hash
+    // Fetch registry
     let regTxt = "";
     try{
       regTxt = await fetchText(url);
     }catch(e){
       okAll = false;
-      report.push(line("REGISTRY_FETCH :: ERROR"));
-      report.push(line("DETAIL :: " + (e && e.message ? e.message : String(e))));
+      report.push("REGISTRY_FETCH :: ERROR");
+      report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
       setStatus(false);
       document.getElementById("report").textContent = report.join("\n");
       return;
@@ -243,61 +283,99 @@
     const regHash = await sha256Text(regTxt);
     document.getElementById("regHash").textContent = regHash.hash;
 
-    // 2) Parse registry
+    // Parse
     let reg = null;
     try{
       reg = JSON.parse(regTxt);
-      report.push(line("REGISTRY_PARSE :: OK"));
+      report.push("REGISTRY_PARSE :: OK");
     }catch{
       okAll = false;
-      report.push(line("REGISTRY_PARSE :: FAIL (invalid JSON)"));
+      report.push("REGISTRY_PARSE :: FAIL (invalid JSON)");
       setStatus(false);
       document.getElementById("report").textContent = report.join("\n");
       return;
     }
 
-    // 3) Declared registry integrity
-    const declared = pickDeclaredIntegrity(reg);
+    // Declared integrity
+    const declared = pickDeclaredRegistryIntegrity(reg);
     document.getElementById("regDeclared").textContent = declared ? declared : "MISSING";
 
     if(!declared || declared === "UNSET"){
       okAll = false;
-      report.push(line("REGISTRY_DECLARED :: MISSING/UNSET (fail-closed)"));
+      report.push("REGISTRY_DECLARED :: MISSING/UNSET (fail-closed)");
     }else if(declared !== regHash.hash){
       okAll = false;
-      report.push(line("REGISTRY_INTEGRITY :: MISMATCH"));
-      report.push(line("DECLARED :: " + declared));
-      report.push(line("COMPUTED :: " + regHash.hash));
+      report.push("REGISTRY_INTEGRITY :: MISMATCH");
+      report.push("DECLARED :: " + declared);
+      report.push("COMPUTED :: " + regHash.hash);
     }else{
-      report.push(line("REGISTRY_INTEGRITY :: OK"));
-      report.push(line("SHA256 :: " + regHash.hash));
+      report.push("REGISTRY_INTEGRITY :: OK");
+      report.push("SHA256 :: " + regHash.hash);
     }
 
     report.push("");
 
-    // 4) Verify NODE-0002 head.json strictly
+    // NODE-0002 required
     const n2 = getNode(reg, "NODE-0002");
     if(!n2){
       okAll = false;
-      report.push(line("NODE-0002 :: MISSING (fail-closed)"));
+      report.push("NODE-0002 :: MISSING (fail-closed)");
     }else{
-      report.push(line("NODE-0002 :: FOUND"));
+      report.push("NODE-0002 :: FOUND");
+      const endpoints = n2.endpoints || {};
+      const headUrl = typeof endpoints.head === "string" ? endpoints.head : null;
+      const proofsUrl = typeof endpoints.proofs === "string" ? endpoints.proofs : "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json";
+
+      // Verify head self-hash
+      if(!headUrl){
+        okAll = false;
+        report.push("NODE-0002_HEAD_URL :: MISSING (fail-closed)");
+      }else{
+        try{
+          const headRes = await verifySelfHashedJson(headUrl, "NODE-0002_HEAD");
+          report.push("NODE-0002_HEAD_URL :: " + headUrl);
+          report.push("NODE-0002_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET"));
+          report.push("NODE-0002_HEAD_COMPUTED :: " + (headRes.computed || "MISSING"));
+          report.push("NODE-0002_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL"));
+          if(!headRes.ok) okAll = false;
+        }catch(e){
+          okAll = false;
+          report.push("NODE-0002_HEAD :: ERROR");
+          report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
+        }
+      }
+
+      report.push("");
+
+      // Verify proofs self-hash (strict)
       try{
-        const headRes = await verifyNodeHead(n2);
-        report.push(line("NODE-0002_HEAD_URL :: " + (headRes.url || "MISSING")));
-        report.push(line("NODE-0002_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET")));
-        report.push(line("NODE-0002_HEAD_COMPUTED :: " + (headRes.computed || "MISSING")));
-        report.push(line("NODE-0002_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL")));
-        if(!headRes.ok) okAll = false;
+        const pRes = await verifySelfHashedJson(proofsUrl, "NODE-0002_PROOFS");
+        report.push("NODE-0002_PROOFS_URL :: " + proofsUrl);
+        report.push("NODE-0002_PROOFS_DECLARED :: " + (pRes.declared || "MISSING/UNSET"));
+        report.push("NODE-0002_PROOFS_COMPUTED :: " + (pRes.computed || "MISSING"));
+        report.push("NODE-0002_PROOFS_RESULT :: " + (pRes.ok ? "OK" : "FAIL"));
+        if(!pRes.ok) okAll = false;
       }catch(e){
         okAll = false;
-        report.push(line("NODE-0002_HEAD :: ERROR"));
-        report.push(line("DETAIL :: " + (e && e.message ? e.message : String(e))));
+        report.push("NODE-0002_PROOFS :: ERROR");
+        report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
       }
     }
 
     report.push("");
-    report.push(line("VERIFY :: " + (okAll ? "VALID" : "INVALID (FAIL-CLOSED)")));
+    report.push("LEDGER :: EVENTS");
+    try{
+      const ev = await verifyEventsLedger();
+      report.push(...ev.lines);
+      if(!ev.ok) okAll = false;
+    }catch(e){
+      okAll = false;
+      report.push("EVENTS_VERIFY :: ERROR");
+      report.push("DETAIL :: " + (e && e.message ? e.message : String(e)));
+    }
+
+    report.push("");
+    report.push("VERIFY :: " + (okAll ? "VALID" : "INVALID (FAIL-CLOSED)"));
 
     setStatus(okAll);
     document.getElementById("report").textContent = report.join("\n");
