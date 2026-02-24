@@ -3,20 +3,27 @@
   "kind": "APPEND_ONLY_EVENT_LEDGER",
   "network": "EU",
   "mode": "APPEND_ONLY",
-  "policy": ["HASH_ONLY", "APPEND_ONLY", "FAIL_CLOSED", "UE_FIRST", "AUDIT_FIRST", "GDPR_MIN"],
+  "policy": [
+    "HASH_ONLY",
+    "APPEND_ONLY",
+    "FAIL_CLOSED",
+    "UE_FIRST",
+    "AUDIT_FIRST",
+    "GDPR_MIN"
+  ],
   "endpoints": {
     "index": "https://manuelcoletta1-source.github.io/ipr-network/events/index.json",
     "event_prefix": "https://manuelcoletta1-source.github.io/ipr-network/events/"
   },
   "integrity": {
-    "self_hash_sha256": "be2a46053f6a9d414ced5873a6e641da9e638cb72e505eeda972a134dec5594d",
+    "self_hash_sha256": "6b30d276510cef114e06650a9d2a7e697b1ab6e4961d6eb072f2fe6d3df0a375",
     "method": "DETERMINISTIC_SHA256_MATCH"
   },
   "entries": [
     {
       "event_id": 1,
       "path": "000001.json",
-      "sha256": "UNSET",
+      "sha256": "3b919d199b393e440dcb5e3b787a0a86b30d4782797cc642d3ea18aa25b7d4e6",
       "prev_sha256": "GENESIS"
     }
   ]
