@@ -85,10 +85,9 @@
     <a class="pill" href="../">Home</a>
     <a class="pill" href="../status/">Network Status</a>
     <a class="pill" href="../nodes/registry.json">Node Registry</a>
-    <a class="pill" href="../node-pack/head.json">NODE-0002 head</a>
-    <a class="pill" href="../node-pack/proofs.json">NODE-0002 proofs</a>
     <a class="pill" href="../events/index.json">Events Index</a>
     <a class="pill" href="../tools/sha256/">SHA-256 Tool</a>
+    <a class="pill" href="../spec/">Spec</a>
   </div>
 
   <div class="card">
@@ -102,6 +101,7 @@
       <br/>- Registry hash computed ignoring <code>nodes[].proofs.integrity_sha256</code>.
       <br/>- For node head/proofs and events files, hash computed ignoring <code>integrity.self_hash_sha256</code>.
       <br/>- Events ledger is verified for <b>all entries</b> (hash + prev chain).
+      <br/>- Deployment nodes are verified for <b>all nodes exposing head + proofs endpoints</b>.
     </div>
   </div>
 
@@ -218,12 +218,51 @@
     return { ok, url, declared, computed: computed.hash };
   }
 
+  async function verifyDeploymentNodes(reg, report){
+    const nodes = Array.isArray(reg.nodes) ? reg.nodes : [];
+    let okAll = true;
+
+    report.push("NODES :: DEPLOYMENT (CANONICAL)");
+
+    for(const n of nodes){
+      const id = n && typeof n.node_id === "string" ? n.node_id : "MISSING";
+      const eps = n && n.endpoints ? n.endpoints : {};
+      const headUrl = eps && typeof eps.head === "string" ? eps.head : null;
+      const proofsUrl = eps && typeof eps.proofs === "string" ? eps.proofs : null;
+
+      // consider "deployment nodes" as those exposing head+proofs
+      if(!headUrl || !proofsUrl) continue;
+
+      report.push(id + " :: FOUND");
+
+      const headRes = await verifySelfHashedJsonCanonical(headUrl);
+      report.push(id + "_HEAD_URL :: " + headUrl);
+      report.push(id + "_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET"));
+      report.push(id + "_HEAD_COMPUTED_CANONICAL :: " + (headRes.computed || "MISSING"));
+      report.push(id + "_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL"));
+      if(!headRes.ok) okAll = false;
+
+      report.push("");
+
+      const pRes = await verifySelfHashedJsonCanonical(proofsUrl);
+      report.push(id + "_PROOFS_URL :: " + proofsUrl);
+      report.push(id + "_PROOFS_DECLARED :: " + (pRes.declared || "MISSING/UNSET"));
+      report.push(id + "_PROOFS_COMPUTED_CANONICAL :: " + (pRes.computed || "MISSING"));
+      report.push(id + "_PROOFS_RESULT :: " + (pRes.ok ? "OK" : "FAIL"));
+      if(!pRes.ok) okAll = false;
+
+      report.push("");
+    }
+
+    return okAll;
+  }
+
   async function verifyEventsLedgerCanonicalFull(){
     const indexUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/index.json";
     const lines = [];
     let okAll = true;
 
-    // 1) index self-hash
+    // index self-hash
     const idxRes = await verifySelfHashedJsonCanonical(indexUrl);
     lines.push("EVENTS_INDEX_URL :: " + indexUrl);
     lines.push("EVENTS_INDEX_DECLARED :: " + (idxRes.declared || "MISSING/UNSET"));
@@ -235,7 +274,6 @@
       return { ok:false, lines };
     }
 
-    // 2) parse entries
     const idxTxt = await fetchText(indexUrl);
     const idx = JSON.parse(idxTxt);
     const entries = Array.isArray(idx.entries) ? idx.entries : [];
@@ -244,8 +282,7 @@
       return { ok:false, lines };
     }
 
-    // 3) verify each entry
-    let prevCanonicalFromIndex = null; // expected prev for entry i
+    let prevFromIndex = null;
     for(let i=0;i<entries.length;i++){
       const e = entries[i];
       const eid = e && typeof e.event_id === "number" ? e.event_id : null;
@@ -253,27 +290,25 @@
       const declaredSha = e && typeof e.sha256 === "string" ? e.sha256.trim() : null;
       const declaredPrev = e && typeof e.prev_sha256 === "string" ? e.prev_sha256.trim() : null;
 
+      const expectedPrev = (i === 0) ? "GENESIS" : prevFromIndex;
+
       lines.push("EVENT_" + (i+1) + "_INDEX_EVENT_ID :: " + (eid !== null ? String(eid) : "MISSING"));
       lines.push("EVENT_" + (i+1) + "_INDEX_PATH :: " + (path || "MISSING"));
       lines.push("EVENT_" + (i+1) + "_INDEX_DECLARED_SHA :: " + (declaredSha || "MISSING/UNSET"));
       lines.push("EVENT_" + (i+1) + "_INDEX_DECLARED_PREV :: " + (declaredPrev || "MISSING"));
 
-      // expected prev rules
-      const expectedPrev = (i === 0) ? "GENESIS" : prevCanonicalFromIndex;
       const okPrevIndex = (declaredPrev === expectedPrev);
 
       if(!path || !declaredSha || declaredSha === "UNSET" || !declaredPrev){
         okAll = false;
         lines.push("EVENT_" + (i+1) + "_RESULT :: FAIL (missing fields)");
         lines.push("");
-        // cannot continue safely because chain state is unknown; fail-closed but still try to continue
-        prevCanonicalFromIndex = declaredSha || null;
+        prevFromIndex = declaredSha || null;
         continue;
       }
 
       const eventUrl = "https://manuelcoletta1-source.github.io/ipr-network/events/" + path;
 
-      // fetch and canonical-hash event
       let evTxt = "";
       try{
         evTxt = await fetchText(eventUrl);
@@ -283,7 +318,7 @@
         lines.push("EVENT_" + (i+1) + "_FETCH :: FAIL (" + (err && err.message ? err.message : String(err)) + ")");
         lines.push("EVENT_" + (i+1) + "_RESULT :: FAIL");
         lines.push("");
-        prevCanonicalFromIndex = declaredSha; // still advance expected prev based on index chain
+        prevFromIndex = declaredSha;
         continue;
       }
 
@@ -296,7 +331,7 @@
         lines.push("EVENT_" + (i+1) + "_PARSE :: FAIL (invalid JSON)");
         lines.push("EVENT_" + (i+1) + "_RESULT :: FAIL");
         lines.push("");
-        prevCanonicalFromIndex = declaredSha;
+        prevFromIndex = declaredSha;
         continue;
       }
 
@@ -333,9 +368,7 @@
       lines.push("");
 
       if(!okEvent) okAll = false;
-
-      // advance expected prev based on index chain (the declared sha)
-      prevCanonicalFromIndex = declaredSha;
+      prevFromIndex = declaredSha;
     }
 
     lines.unshift("EVENTS_INDEX_RESULT :: OK");
@@ -376,41 +409,9 @@
 
     report.push("");
 
-    const n2 = getNode(reg, "NODE-0002");
-    if(!n2){
-      okAll = false;
-      report.push("NODE-0002 :: MISSING (fail-closed)");
-    }else{
-      report.push("NODE-0002 :: FOUND");
-      const headUrl = n2.endpoints && typeof n2.endpoints.head === "string" ? n2.endpoints.head : null;
-      const proofsUrl = n2.endpoints && typeof n2.endpoints.proofs === "string" ? n2.endpoints.proofs : null;
-
-      if(!headUrl){
-        okAll = false;
-        report.push("NODE-0002_HEAD_URL :: MISSING (fail-closed)");
-      }else{
-        const headRes = await verifySelfHashedJsonCanonical(headUrl);
-        report.push("NODE-0002_HEAD_URL :: " + headUrl);
-        report.push("NODE-0002_HEAD_DECLARED :: " + (headRes.declared || "MISSING/UNSET"));
-        report.push("NODE-0002_HEAD_COMPUTED_CANONICAL :: " + (headRes.computed || "MISSING"));
-        report.push("NODE-0002_HEAD_RESULT :: " + (headRes.ok ? "OK" : "FAIL"));
-        if(!headRes.ok) okAll = false;
-      }
-
-      report.push("");
-
-      if(!proofsUrl){
-        okAll = false;
-        report.push("NODE-0002_PROOFS_URL :: MISSING (fail-closed)");
-      }else{
-        const pRes = await verifySelfHashedJsonCanonical(proofsUrl);
-        report.push("NODE-0002_PROOFS_URL :: " + proofsUrl);
-        report.push("NODE-0002_PROOFS_DECLARED :: " + (pRes.declared || "MISSING/UNSET"));
-        report.push("NODE-0002_PROOFS_COMPUTED_CANONICAL :: " + (pRes.computed || "MISSING"));
-        report.push("NODE-0002_PROOFS_RESULT :: " + (pRes.ok ? "OK" : "FAIL"));
-        if(!pRes.ok) okAll = false;
-      }
-    }
+    // verify all deployment nodes
+    const okNodes = await verifyDeploymentNodes(reg, report);
+    if(!okNodes) okAll = false;
 
     report.push("");
     report.push("LEDGER :: EVENTS (CANONICAL, FULL)");
