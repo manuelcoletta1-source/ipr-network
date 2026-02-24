@@ -60,7 +60,7 @@
   },
   "prev_event_sha256": "e5437998c68193814eb79ca4e99093d0cf50711ddc14676f3ecc6954ef7531f4",
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "425fcf5031631b1201ac01b6f2dc5edf6935ec58b18395a6c6e4d98dada30d00",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
