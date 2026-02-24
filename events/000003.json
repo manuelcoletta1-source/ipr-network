@@ -10,7 +10,7 @@
   "registry_sha256_canonical": "4f07cb32406ba6b371ecc11e773b3e70decdd8729b9b0df091b8e768e60e12de",
   "prev_event_sha256": "d8b86dc5972356c2855fbff9ab525f861ac2fac0f84be288cddd1665c4922fa7",
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "fa1c3a4307b8a7328cf4c46377b5936a56af91303590e9be045ac2474073c5d6",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
