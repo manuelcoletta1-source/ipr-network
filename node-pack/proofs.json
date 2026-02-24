@@ -1,0 +1,15 @@
+{
+  "proto": "HBCE-NODE-PROOFS-v1",
+  "node_id": "NODE-0002",
+  "network": "EU",
+  "proofs": {
+    "integrity_sha256": "UNSET",
+    "signed_receipt": "UNSET",
+    "timestamping": {
+      "btc_txid": "UNSET",
+      "evm_tx": "UNSET",
+      "ipfs_cid": "UNSET"
+    }
+  },
+  "policy": ["HASH_ONLY", "APPEND_ONLY", "FAIL_CLOSED", "UE_FIRST", "AUDIT_FIRST", "GDPR_MIN"]
+}
