@@ -42,6 +42,7 @@
     .err{color:var(--bad)}
     .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     .pill{border:1px solid var(--border);border-radius:999px;padding:8px 12px;color:var(--muted);font-size:13px}
+    .hint{color:var(--muted);font-size:12px;line-height:1.6;margin-top:8px}
   </style>
 </head>
 
@@ -50,7 +51,7 @@
   <h1>SHA-256 Tool (Browser)</h1>
   <p>
     Deterministic SHA-256 calculator using WebCrypto.
-    Use it to compute integrity hashes for <code>head.json</code>, <code>registry.json</code>, and any other public artifacts.
+    Includes <b>CANONICAL</b> hashing to avoid self-hash loops (ignores declared-hash fields).
   </p>
 
   <div class="row">
@@ -58,6 +59,7 @@
     <a class="pill" href="../../status/">Network Status</a>
     <a class="pill" href="../../nodes/registry.json">Node Registry</a>
     <a class="pill" href="../../node-pack/head.json">Node-Pack head.json</a>
+    <a class="pill" href="../../verify/">Verify</a>
   </div>
 
   <div class="grid">
@@ -65,18 +67,20 @@
     <section class="card">
       <label>1) Hash a URL (fetch text)</label>
       <input id="url" placeholder="https://.../file.json" />
-      <button id="btnUrl">Compute SHA-256 from URL</button>
+      <button id="btnUrl">Compute SHA-256 (RAW + CANONICAL)</button>
       <div id="outUrl" class="out">Output will appear here.</div>
+      <div class="hint">
+        CANONICAL rules:
+        <br/>- For JSON with <code>integrity.self_hash_sha256</code>, that field is ignored during CANONICAL hashing.
+        <br/>- For registry (<code>HBCE-REGISTRY*</code>), <code>nodes[].proofs.integrity_sha256</code> is ignored during CANONICAL hashing.
+      </div>
     </section>
 
     <section class="card">
       <label>2) Hash pasted content (exact bytes)</label>
       <textarea id="txt" placeholder="Paste JSON here (exact)."></textarea>
-      <button id="btnTxt">Compute SHA-256 from Text</button>
+      <button id="btnTxt">Compute SHA-256 (RAW + CANONICAL)</button>
       <div id="outTxt" class="out">Output will appear here.</div>
-      <p style="margin-top:10px">
-        Note: JSON must be hashed exactly as served. Best practice is hashing via URL above.
-      </p>
     </section>
 
   </div>
@@ -89,10 +93,7 @@
   function toHex(buf){
     const bytes = new Uint8Array(buf);
     let hex = "";
-    for(let i=0;i<bytes.length;i++){
-      const h = bytes[i].toString(16).padStart(2,"0");
-      hex += h;
-    }
+    for(let i=0;i<bytes.length;i++) hex += bytes[i].toString(16).padStart(2,"0");
     return hex;
   }
 
@@ -103,7 +104,8 @@
 
   async function sha256Text(s){
     const enc = new TextEncoder();
-    return sha256Bytes(enc.encode(s));
+    const bytes = enc.encode(s);
+    return { hash: await sha256Bytes(bytes), bytes: bytes.length };
   }
 
   async function fetchText(url){
@@ -116,6 +118,65 @@
     el.innerHTML = isErr ? ('<span class="err">' + msg + '</span>') : msg;
   }
 
+  function deepClone(x){
+    return JSON.parse(JSON.stringify(x));
+  }
+
+  function canonicalizeJsonForHash(obj){
+    const o = deepClone(obj);
+
+    // ignore integrity.self_hash_sha256
+    try{
+      if(o && o.integrity && typeof o.integrity === "object"){
+        if(Object.prototype.hasOwnProperty.call(o.integrity, "self_hash_sha256")){
+          o.integrity.self_hash_sha256 = "IGNORED_FOR_CANONICAL_HASH";
+        }
+      }
+    }catch{}
+
+    // registry special: ignore nodes[].proofs.integrity_sha256
+    try{
+      const proto = (o && typeof o.proto === "string") ? o.proto : "";
+      if(proto.startsWith("HBCE-REGISTRY")){
+        const nodes = Array.isArray(o.nodes) ? o.nodes : [];
+        for(const n of nodes){
+          if(n && n.proofs && typeof n.proofs === "object" &&
+             Object.prototype.hasOwnProperty.call(n.proofs, "integrity_sha256")){
+            n.proofs.integrity_sha256 = "IGNORED_FOR_CANONICAL_HASH";
+          }
+        }
+      }
+    }catch{}
+
+    return JSON.stringify(o);
+  }
+
+  async function hashBoth(txt){
+    const raw = await sha256Text(txt);
+
+    let canonical = null;
+    try{
+      const obj = JSON.parse(txt);
+      const canTxt = canonicalizeJsonForHash(obj);
+      canonical = await sha256Text(canTxt);
+    }catch{
+      canonical = null;
+    }
+
+    return { raw, canonical };
+  }
+
+  function renderResult(res){
+    const lines = [];
+    lines.push("RAW sha256: " + res.raw.hash + "  bytes: " + res.raw.bytes);
+    if(res.canonical){
+      lines.push("CANONICAL sha256: " + res.canonical.hash + "  bytes: " + res.canonical.bytes);
+    }else{
+      lines.push("CANONICAL sha256: (not JSON / parse failed)");
+    }
+    return lines.join("\n");
+  }
+
   document.getElementById("btnUrl").addEventListener("click", async () => {
     const out = document.getElementById("outUrl");
     const url = (document.getElementById("url").value || "").trim();
@@ -123,8 +184,8 @@
     try{
       setOut(out, "Fetching...", false);
       const txt = await fetchText(url);
-      const h = await sha256Text(txt);
-      setOut(out, "sha256: " + h + "\nbytes: " + new TextEncoder().encode(txt).length, false);
+      const res = await hashBoth(txt);
+      setOut(out, renderResult(res), false);
     }catch(e){
       setOut(out, "ERROR: " + (e && e.message ? e.message : String(e)), true);
     }
@@ -135,8 +196,8 @@
     const txt = document.getElementById("txt").value || "";
     if(!txt.trim()) return setOut(out, "Paste content first.", true);
     try{
-      const h = await sha256Text(txt);
-      setOut(out, "sha256: " + h + "\nbytes: " + new TextEncoder().encode(txt).length, false);
+      const res = await hashBoth(txt);
+      setOut(out, renderResult(res), false);
     }catch(e){
       setOut(out, "ERROR: " + (e && e.message ? e.message : String(e)), true);
     }
