@@ -29,6 +29,24 @@
         "integrity": "UNSET",
         "method": "DETERMINISTIC_SHA256_MATCH"
       }
+    },
+    {
+      "node_id": "NODE-0002",
+      "name": "Node Pack Deployment Surface",
+      "role": "DEPLOYMENT_SURFACE",
+      "state": "ONLINE",
+      "visibility": "PUBLIC",
+      "sync": "STANDALONE",
+      "endpoints": {
+        "home": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/",
+        "head": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/head.json",
+        "proofs": "https://manuelcoletta1-source.github.io/ipr-network/node-pack/proofs.json",
+        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json"
+      },
+      "proofs": {
+        "integrity": "UNSET",
+        "method": "DETERMINISTIC_SHA256_MATCH"
+      }
     }
   ]
 }
