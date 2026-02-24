@@ -9,7 +9,7 @@
   "node_id": "NODE-0002",
   "prev_event_sha256": "3b919d199b393e440dcb5e3b787a0a86b30d4782797cc642d3ea18aa25b7d4e6",
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "d8b86dc5972356c2855fbff9ab525f861ac2fac0f84be288cddd1665c4922fa7",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
