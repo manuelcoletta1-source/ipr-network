@@ -1,0 +1,34 @@
+{
+  "proto": "HBCE-REGISTRY-v3",
+  "kind": "IPR_NETWORK_NODE_REGISTRY",
+  "network": "EU",
+  "mode": "APPEND_ONLY_PUBLIC_REGISTRY",
+  "issuer": "HERMETICUM B.C.E. S.r.l.",
+  "jurisdiction": "EU",
+  "policy": ["HASH_ONLY", "APPEND_ONLY", "FAIL_CLOSED", "UE_FIRST", "AUDIT_FIRST", "GDPR_MIN"],
+  "rules": {
+    "public_data": "HASH_ONLY",
+    "write_mode": "MANUAL_APPEND_ONLY",
+    "verification": "DETERMINISTIC_SHA256_MATCH",
+    "failure_mode": "FAIL_CLOSED"
+  },
+  "nodes": [
+    {
+      "node_id": "NODE-0001",
+      "name": "IPR Network Status Surface",
+      "role": "PUBLIC_VISIBILITY_NODE",
+      "state": "ONLINE",
+      "visibility": "PUBLIC",
+      "sync": "STANDALONE",
+      "endpoints": {
+        "home": "https://manuelcoletta1-source.github.io/ipr-network/",
+        "status": "https://manuelcoletta1-source.github.io/ipr-network/status/",
+        "registry": "https://manuelcoletta1-source.github.io/ipr-network/nodes/registry.json"
+      },
+      "proofs": {
+        "integrity": "UNSET",
+        "method": "DETERMINISTIC_SHA256_MATCH"
+      }
+    }
+  ]
+}
