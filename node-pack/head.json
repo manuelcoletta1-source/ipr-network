@@ -15,7 +15,7 @@
     "sha256_tool": "https://manuelcoletta1-source.github.io/ipr-network/tools/sha256/"
   },
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "76c3f5f4a068e45acf99fd5778621749be12019f813d28d5da435c04805a4b22",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
