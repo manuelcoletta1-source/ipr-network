@@ -20,7 +20,7 @@
     "note": "Event signing will be activated upon formal VAT registration and operator licensing."
   },
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "8307d051c86d8ea0c7de3a600f4764aaaee3e4454813641ed89721b86a139587",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
