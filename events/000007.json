@@ -23,7 +23,7 @@
     "signed_over": "EVENT_SHA256_CANONICAL_HEX"
   },
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "2245fd34e04d6b6c9d9afeb9b6aa13d91768bf36b914c196388c13e2e62af8c0",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
