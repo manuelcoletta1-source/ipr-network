@@ -1,0 +1,29 @@
+{
+  "proto": "HBCE-EVENT-v1",
+  "network": "EU",
+  "event_id": 7,
+  "type": "SIGNING_ENABLED",
+  "ts": "2026-02-25T00:00:00+01:00",
+  "issuer": "HERMETICUM B.C.E. S.r.l.",
+  "policy": [
+    "UE_FIRST",
+    "AUDIT_FIRST",
+    "FAIL_CLOSED",
+    "HASH_ONLY",
+    "APPEND_ONLY",
+    "NO_IDENTITY_CUSTODY"
+  ],
+  "prev_event_sha256": "1966fc161b01a396111a0e07b8f46255ddcd9cf1b460fd77806a95be3efbf5cb",
+  "signing": {
+    "status": "ACTIVE",
+    "alg": "Ed25519",
+    "key_id": "NODE-0001_SIGNING_KEY_01",
+    "keys_url": "https://manuelcoletta1-source.github.io/ipr-network/keys/keys.json",
+    "storage": "NODE_PROOFS_RECEIPTS",
+    "signed_over": "EVENT_SHA256_CANONICAL_HEX"
+  },
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
