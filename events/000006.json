@@ -28,7 +28,7 @@
     "keys_sha256_canonical": "21dc1faa2e1bfc16d570bd1974eef0759b4261461f76c5334424b66a8f32ca1d"
   },
   "integrity": {
-    "self_hash_sha256": "UNSET",
+    "self_hash_sha256": "1966fc161b01a396111a0e07b8f46255ddcd9cf1b460fd77806a95be3efbf5cb",
     "method": "DETERMINISTIC_SHA256_MATCH"
   }
 }
