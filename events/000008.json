@@ -1,0 +1,26 @@
+{
+  "proto": "HBCE-EVENT-v1",
+  "network": "EU",
+  "event_id": 8,
+  "type": "SIGNING_DEFERRED",
+  "ts": "2026-02-25T00:00:00+01:00",
+  "issuer": "HERMETICUM B.C.E. S.r.l.",
+  "policy": [
+    "UE_FIRST",
+    "AUDIT_FIRST",
+    "FAIL_CLOSED",
+    "HASH_ONLY",
+    "APPEND_ONLY",
+    "NO_IDENTITY_CUSTODY"
+  ],
+  "prev_event_sha256": "2245fd34e04d6b6c9d9afeb9b6aa13d91768bf36b914c196388c13e2e62af8c0",
+  "reason": {
+    "status": "TEMPORARY_DEFERRAL",
+    "trigger": "OPERATOR_VAT_PENDING",
+    "note": "Event signing will be activated upon formal VAT registration and operator licensing."
+  },
+  "integrity": {
+    "self_hash_sha256": "UNSET",
+    "method": "DETERMINISTIC_SHA256_MATCH"
+  }
+}
