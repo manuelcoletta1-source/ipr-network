@@ -16,7 +16,7 @@
     "event_prefix": "https://manuelcoletta1-source.github.io/ipr-network/events/"
   },
   "integrity": {
-    "self_hash_sha256": "d41b600f9242652e4584da1d4b48231e68a53b369219f983ca54f91f369533a9",
+    "self_hash_sha256": "b6b7935aef5a7e839a17872c0ce64fa1281a706d44e9069ec4fe6ad2b0976035",
     "method": "DETERMINISTIC_SHA256_MATCH"
   },
   "entries": [
@@ -49,6 +49,12 @@
       "path": "000005.json",
       "sha256": "425fcf5031631b1201ac01b6f2dc5edf6935ec58b18395a6c6e4d98dada30d00",
       "prev_sha256": "e5437998c68193814eb79ca4e99093d0cf50711ddc14676f3ecc6954ef7531f4"
+    },
+    {
+      "event_id": 6,
+      "path": "000006.json",
+      "sha256": "1966fc161b01a396111a0e07b8f46255ddcd9cf1b460fd77806a95be3efbf5cb",
+      "prev_sha256": "425fcf5031631b1201ac01b6f2dc5edf6935ec58b18395a6c6e4d98dada30d00"
     }
   ]
 }
